@@ -45,18 +45,31 @@ function setFlash($type, $msg) {
     $_SESSION['flash'] = ['type' => $type, 'msg' => $msg];
 }
 
-// Event picture. If the admin gave an image URL we show it,
-// otherwise we draw a coloured box with an emoji (works fully offline).
+// Event picture. Curated category photos with title-based overrides.
 function renderBanner($ev, $extraClass = '') {
     $cls = trim('banner ' . $extraClass);
-    if (!empty($ev['image_url'])) {
-        return '<img src="' . e($ev['image_url']) . '" class="' . $cls . '" alt="' . e($ev['title']) . '">';
+
+    // Curated high quality imagery based on event category or keyword
+    $photos = [
+        'Concert'      => 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80',
+        'Workshop'     => 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=80',
+        'Seminar'      => 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80',
+        'Sports'       => 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&auto=format&fit=crop&q=80',
+        'College Fest' => 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
+    ];
+
+    // Specific overrides for special titles
+    if (stripos($ev['title'], 'comedy') !== false) {
+        $photo = 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&auto=format&fit=crop&q=80';
+    } elseif (stripos($ev['title'], 'photo') !== false) {
+        $photo = 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&auto=format&fit=crop&q=80';
+    } elseif (stripos($ev['title'], 'robot') !== false || stripos($ev['title'], 'ai') !== false) {
+        $photo = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80';
+    } else {
+        $photo = !empty($ev['image_url']) ? $ev['image_url'] : ($photos[$ev['category']] ?? 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80');
     }
-    $icons = ['Concert' => '🎤', 'Workshop' => '🛠️', 'Seminar' => '🎓', 'Sports' => '🏏', 'College Fest' => '🎉'];
-    $icon = $icons[$ev['category']] ?? '🎟️';
-    $hue = crc32($ev['category']) % 360;   // same category = same colour
-    $style = 'background:linear-gradient(135deg,hsl(' . $hue . ',65%,45%),hsl(' . (($hue + 50) % 360) . ',70%,35%))';
-    return '<div class="' . $cls . '" style="' . $style . '">' . $icon . '</div>';
+
+    return '<div class="' . $cls . '"><img src="' . e($photo) . '" alt="' . e($ev['title']) . '" loading="lazy"></div>';
 }
 
 // Nicely formatted date, e.g. 05 Dec 2026, 07:00 PM
@@ -73,8 +86,13 @@ function fmtPrice($p) {
 // This is how a "seat lock with expiry" works in a small project.
 function expirePendingBookings($pdo) {
     try {
-        $stmt = $pdo->query("SELECT id, event_id, quantity FROM bookings
-                             WHERE status='pending' AND created_at < (NOW() - INTERVAL 10 MINUTE)");
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $sql = "SELECT id, event_id, quantity FROM bookings WHERE status='pending' AND created_at < datetime('now', '-10 minutes')";
+        } else {
+            $sql = "SELECT id, event_id, quantity FROM bookings WHERE status='pending' AND created_at < (NOW() - INTERVAL 10 MINUTE)";
+        }
+        $stmt = $pdo->query($sql);
         foreach ($stmt->fetchAll() as $b) {
             $pdo->beginTransaction();
             $up = $pdo->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND status='pending'");

@@ -21,33 +21,60 @@ $categories = $pdo->query('SELECT DISTINCT category FROM events ORDER BY categor
 require 'includes/header.php';
 ?>
 <div class="hero">
-  <h1>Discover &amp; book amazing events</h1>
-  <p>Concerts, workshops, seminars, sports and college fests in one place.</p>
-  <form class="search-form" method="get">
-    <input type="text" name="q" placeholder="Search by event or venue" value="<?= e($q) ?>">
-    <select name="category">
-      <option value="">All categories</option>
-      <?php foreach ($categories as $c): ?>
-        <option value="<?= e($c) ?>" <?= $c === $category ? 'selected' : '' ?>><?= e($c) ?></option>
-      <?php endforeach; ?>
-    </select>
-    <button class="btn btn-primary">Search</button>
-  </form>
+  <div class="hero-particles"></div>
+  <div class="hero-content">
+    <div class="hero-pill">
+      <span class="hero-pill-dot">🎟️</span>
+      Discover &amp; Book Events Near You
+    </div>
+    <h1>Find Your Next<br><span class="gradient-text">Unforgettable</span> Experience</h1>
+    <p>Concerts, workshops, seminars, sports and college fests — all in one beautifully curated place.</p>
+    <div class="hero-cta">
+      <a href="#events" class="btn btn-primary">Explore Events →</a>
+      <?php if (!isLoggedIn()): ?>
+        <a href="<?= BASE_URL ?>/register.php" class="btn btn-outline">Get Started Free</a>
+      <?php endif; ?>
+    </div>
+    <form class="search-form" method="get">
+      <input type="text" name="q" placeholder="🔍  Search events or venues..." value="<?= e($q) ?>">
+      <select name="category">
+        <option value="">All categories</option>
+        <?php foreach ($categories as $c): ?>
+          <option value="<?= e($c) ?>" <?= $c === $category ? 'selected' : '' ?>><?= e($c) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <button class="btn btn-primary">Search</button>
+    </form>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>scroll</span>
+  </div>
 </div>
 
-<?php if (!$events): ?>
-  <div class="alert alert-info">No events found. Try a different search.</div>
-<?php endif; ?>
+<div class="container" style="padding-top:60px; padding-bottom:80px;">
 
-<div class="grid">
-<?php foreach ($events as $ev): ?>
-  <div class="card event-card">
-    <?= renderBanner($ev) ?>
-    <div class="card-body">
-      <span class="badge"><?= e($ev['category']) ?></span>
-      <h3><?= e($ev['title']) ?></h3>
-      <p class="muted small">📅 <?= e(fmtDate($ev['event_date'])) ?></p>
-      <p class="muted small">📍 <?= e($ev['venue']) ?></p>
+  <div id="events" class="section-header reveal">
+    <h2><?= $q || $category ? 'Search Results' : 'Upcoming Events' ?></h2>
+    <p><?= count($events) ?> event<?= count($events) !== 1 ? 's' : '' ?> available<?= $category ? ' in <strong>' . e($category) . '</strong>' : '' ?></p>
+  </div>
+
+  <?php if (!$events): ?>
+    <div class="alert alert-info">No events found. Try a different search.</div>
+  <?php endif; ?>
+
+  <div class="grid">
+  <?php foreach ($events as $ev): ?>
+    <div class="card event-card">
+      <div class="event-card-visual">
+        <?= renderBanner($ev) ?>
+        <div class="event-card-overlay">
+          <span class="badge"><?= e($ev['category']) ?></span>
+          <h3><?= e($ev['title']) ?></h3>
+          <p class="small">📅 <?= e(fmtDate($ev['event_date'])) ?></p>
+          <p class="small">📍 <?= e($ev['venue']) ?></p>
+        </div>
+      </div>
       <div class="card-footer-row">
         <span class="price"><?= e(fmtPrice($ev['price'])) ?></span>
         <?php if ($ev['available_seats'] > 0): ?>
@@ -57,7 +84,8 @@ require 'includes/header.php';
         <?php endif; ?>
       </div>
     </div>
+  <?php endforeach; ?>
   </div>
-<?php endforeach; ?>
+
 </div>
 <?php require 'includes/footer.php'; ?>

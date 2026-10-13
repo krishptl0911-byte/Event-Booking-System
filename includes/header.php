@@ -5,7 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($pageTitle ?? 'EventHub') ?></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
+  <style>body { padding-top: 68px; }</style>
 </head>
 <body>
 <nav class="navbar">
@@ -30,11 +34,13 @@
     </ul>
   </div>
 </nav>
-<main class="container">
+<main>
 <?php if (isset($_SESSION['flash'])): ?>
-  <div class="alert alert-<?= e($_SESSION['flash']['type']) ?>">
-    <?= e($_SESSION['flash']['msg']) ?>
-    <button type="button" class="alert-close">&times;</button>
+  <div class="container" style="padding-top: 20px;">
+    <div class="alert alert-<?= e($_SESSION['flash']['type']) ?>">
+      <?= e($_SESSION['flash']['msg']) ?>
+      <button type="button" class="alert-close">&times;</button>
+    </div>
   </div>
   <?php unset($_SESSION['flash']); ?>
 <?php endif; ?>
